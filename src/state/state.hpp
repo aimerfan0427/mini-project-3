@@ -46,14 +46,16 @@ class State{
     GameState game_state = UNKNOWN;
     Board board;
     int player = 0;
+    int state_value;
     std::vector<Move> legal_actions;
+    std::vector<State*> next_states;
     
     State(){};
     State(int player): player(player){};
     State(Board board): board(board){};
     State(Board board, int player): board(board), player(player){};
     
-    int evaluate();
+    int evaluate(bool my_turn);
     State* next_state(Move move);
     void get_legal_actions();
     std::string encode_output();
