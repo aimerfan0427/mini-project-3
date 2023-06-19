@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include "../state/state.hpp"
 #include "./minimax.hpp"
@@ -23,7 +24,7 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
     state->get_legal_actions();
   
   //auto actions = state->legal_actions;
-  state->next_states=construct_tree(state,depth-1);
+  construct_tree(state,depth);
 
   int who_am_I=state->player;//0:我是白,1:我是黑
 
@@ -32,13 +33,25 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
   int value=-100000000;
   for(auto the_next_state:state->next_states){
     the_next_state->state_value=go_minimax(state,depth,!state->player,who_am_I);
-    value=max(value,the_next_state->state_value);
+    //value=max(value,the_next_state->state_value);
   }
-  for(size_t i=0;i < (state->legal_actions.size());i++){
-    if(state->next_states[i]->state_value == value){
+  for(size_t i=0;i <state->next_states.size();i++){
+    if(state->next_states[i]->state_value > value){
+      value=state->next_states[i]->state_value;
       move=state->legal_actions[i];
     }
   }
+
+  cout<<value<<"???????\n\n\n\n\n"<<endl;
+
+  /*for(size_t i=0;i < (state->legal_actions.size());i++){
+    if(state->next_states[i]->state_value == value){
+      cout<<state->next_states[i]->state_value<<"!!!!!!!!!\n\n\n\n\n"<<endl;
+      move=state->legal_actions[i];
+      break;
+    }
+    
+  }*/
 
   return move;
 }
@@ -50,7 +63,7 @@ int minimax::go_minimax(State *state,int depth,int player,int who_am_I){
   my_turn=!(player ^ who_am_I);
 
   if(depth ==0 || state->game_state == WIN || state->game_state == DRAW){
-    state->state_value=state->evaluate(my_turn);
+    state->state_value=state->evaluate(my_turn,who_am_I);
     return state->state_value;
   }
 
@@ -73,15 +86,20 @@ int minimax::go_minimax(State *state,int depth,int player,int who_am_I){
   return value;
 }
 
-vector<State*> minimax::construct_tree(State *state,int depth){//有錯
+void minimax::construct_tree(State *state,int depth){//有錯
+
+  if(depth == 0 || state->game_state == WIN || state->game_state == DRAW) return ;
 
   State *next;
-  for(auto move:state->legal_actions){
-    next=state->next_state(move);
-    next->next_states=construct_tree(next,depth-1);
+  state->get_legal_actions();
 
+  for(size_t i=0;i<state->legal_actions.size();i++){
+    Move move=state->legal_actions[i];
+    next=state->next_state(move);
     state->next_states.push_back(next);
+
+    construct_tree(next,depth-1);
   }
 
-  if(depth == 0 || state->game_state == WIN || state->game_state == DRAW) return state->next_states;
+  return;
 }
