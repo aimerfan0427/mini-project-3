@@ -13,5 +13,5 @@ class minimax{
 public:
   static Move get_move(State *state, int depth);
   static int go_minimax(State *state,int depth,int player,int who_am_I);
-  static vector<State*> construct_tree(State *state,int depth);
+  static void construct_tree(State *state,int depth);
 };

@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "../state/state.hpp"
-#include "./minimax.hpp"
+#include "./ab.hpp"
 
 using namespace std;
 
@@ -16,13 +16,11 @@ using namespace std;
  * @return Move 
  */
 
-Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
+Move ab::get_move(State *state, int depth){//在這裡call evaluate()
   
-  //if(depth == 0 || state->game_state == WIN || state->game_state == DRAW)
-  
-  if(!state->legal_actions.size())
+  /*if(!state->legal_actions.size())
     state->get_legal_actions();
-  
+  */
   //auto actions = state->legal_actions;
   construct_tree(state,depth);
 
@@ -32,7 +30,7 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
 
   int value=-100000000;
   for(auto the_next_state:state->next_states){
-    the_next_state->state_value=go_minimax(state,depth,!state->player,who_am_I);
+    the_next_state->state_value=go_minimax(state,depth-1,!state->player,who_am_I,-100000000,100000000);
     //value=max(value,the_next_state->state_value);
   }
   for(size_t i=0;i <state->next_states.size();i++){
@@ -42,7 +40,7 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
     }
   }
 
-  //cout<<value<<"???????\n\n\n\n\n"<<endl;
+  cout<<value<<"???????\n\n\n\n\n"<<endl;
 
   /*for(size_t i=0;i < (state->legal_actions.size());i++){
     if(state->next_states[i]->state_value == value){
@@ -56,44 +54,60 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
   return move;
 }
 
-int minimax::go_minimax(State *state,int depth,int player,int who_am_I){
+int ab::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int beta){
 
-  int value;
+  int value=0;
   bool my_turn;
   my_turn=!(player ^ who_am_I);
 
-  if(depth ==0 || state->game_state == WIN || state->game_state == DRAW){
+  if(depth == 0){
     state->state_value=state->evaluate(my_turn,who_am_I);
     return state->state_value;
   }
+  //if(state->game_state == WIN ) return 10000;
 
   if(my_turn){//should maximize the value
-    value=-100000000;
+    int maximum=-100000000;
 
     for(auto the_next_state:state->next_states){
-      value=max(value,go_minimax(the_next_state,depth-1,!player,who_am_I));
+      value=go_minimax(the_next_state,depth-1,!player,who_am_I,alpha,beta);
+      maximum=max(value,maximum);
+      alpha=max(alpha,value);
+      if(alpha >= beta){
+        break;
+      }
     }
+
+    //state->state_value=maximum;
+
+    return maximum;
   }
   else{
-    value=100000000;
+    int minimum=100000000;
 
     for(auto the_next_state:state->next_states){
-      value=min(value,go_minimax(the_next_state,depth-1,!player,who_am_I));
+      value=go_minimax(the_next_state,depth-1,!player,who_am_I,alpha,beta);
+      minimum=min(value,minimum);
+      beta=min(beta,value);
+      if(alpha >= beta){
+        break;
+      }
     }
-  }
-  state->state_value=value;
 
-  return value;
+    //state->state_value=minimum;
+
+    return minimum;
+  }
 }
 
-void minimax::construct_tree(State *state,int depth){//有錯
+void ab::construct_tree(State *state,int depth){
 
-  if(depth == 0 || state->game_state == WIN || state->game_state == DRAW) return ;
+  if(depth == 0) return ;
 
   State *next;
   state->get_legal_actions();
 
-  for(size_t i=0;i<state->legal_actions.size();i++){
+  for(size_t i=0;i < state->legal_actions.size();i++){
     Move move=state->legal_actions[i];
     next=state->next_state(move);
     state->next_states.push_back(next);

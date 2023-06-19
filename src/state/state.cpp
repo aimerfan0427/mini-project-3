@@ -1,10 +1,13 @@
 #include <iostream>
 #include <sstream>
 #include <cstdint>
+#include <cmath>
 
 
 #include "./state.hpp"
 #include "../config.hpp"
+
+using namespace std;
 
 /**
  * @brief evaluate the state
@@ -34,26 +37,43 @@ static const int move_table_king[8][2] = {
   {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
 };
 
-int State::evaluate(bool my_turn){
+int State::evaluate(bool my_turn,int who_am_I){
   // [TODO] design your own evaluation function
   int chess_value[7]={0, 2, 6, 7, 8, 20, 1000};
-  float weight[10]={1,1.5,0.5};
+  float weight[10]={15,8,6,2,15};
   int ans=0;
-  int now_piece,oppo_piece;
+  int now_piece=0,oppo_piece=0;
+  int my_king_pos[2];
 
-  auto self_board=this->board.board[this->player];
-  auto oppo_board=this->board.board[1-this->player];
+  auto self_board=this->board.board[who_am_I];//自己的板永遠是固定的
+  auto oppo_board=this->board.board[1-who_am_I];
+  //cout<<who_am_I<<endl;
 
   for(int i=0;i<BOARD_H;i++){
     for(int j=0;j<BOARD_W;j++){
+      if(self_board[i][j] == 6){
+        my_king_pos[0]=i;
+        my_king_pos[1]=j;
+      }
+    }
+  }
+
+  for(int i=0;i<BOARD_H;i++){
+    for(int j=0;j<BOARD_W;j++){
+
       if(self_board[i][j]){//加自己的
         now_piece=self_board[i][j];
         ans+=chess_value[now_piece]*weight[0];
-
-        if(my_turn){//我的turn
+      }
+      else if(oppo_board[i][j]){//扣別人的
+        oppo_piece=oppo_board[i][j];
+        ans-=chess_value[oppo_piece]*weight[4];
+      }  
+        
+        /*if(my_turn){//我的turn
           switch(now_piece){//判斷能不能吃掉別人
             case 1://pawn
-              if(this->player){//black
+              if(who_am_I){//black
                 if(i < BOARD_H-1){
                   if(j < BOARD_W-1 && (oppo_piece=oppo_board[i+1][j+1])){
                     ans+=chess_value[oppo_piece]*weight[1];
@@ -104,14 +124,7 @@ int State::evaluate(bool my_turn){
                   if(oppo_board[target[0]][target[1]]){//可以吃別人
                     oppo_piece=oppo_board[target[0]][target[1]];
                     ans+=chess_value[oppo_piece]*weight[1];
-                    if(this->player){//black
-                      if(target[1] > j) ans+=chess_value[oppo_piece]*0.5;//往對方陣營侵略
-                      else if(target[1] < j) ans-=chess_value[oppo_piece]*0.5;
-                    }
-                    else{//white
-                      if(target[1] < j) ans+=chess_value[oppo_piece]*0.5;//往對方陣營侵略
-                      else if(target[1] > j) ans-=chess_value[oppo_piece]*0.5;
-                    }
+                    
                     break;
                   }
                 }
@@ -127,19 +140,12 @@ int State::evaluate(bool my_turn){
                 if(oppo_board[target[0]][target[1]]){//可以吃別人
                   oppo_piece=oppo_board[target[0]][target[1]];
                   ans+=chess_value[oppo_piece]*weight[1];
-                  if(this->player){//black
-                    if(target[1] > j) ans+=chess_value[oppo_piece]*0.5;//往對方陣營侵略
-                    else if(target[1] < j) ans-=chess_value[oppo_piece]*0.5;
-                  }
-                  else{//white
-                    if(target[1] < j) ans+=chess_value[oppo_piece]*0.5;//往對方陣營侵略
-                    else if(target[1] > j) ans-=chess_value[oppo_piece]*0.5;
-                  }
                 }
               }
               break;
             case 6:
               for(int block=0;block<8;block++){
+                
                 int target[2]={move_table_king[block][0]+i,move_table_king[block][1]+j};
 
                 if(target[0] >= BOARD_W || target[0] < 0 || target[1] >= BOARD_H || target[1] < 0) continue;;//出界
@@ -153,27 +159,28 @@ int State::evaluate(bool my_turn){
               break;
           }
         }
-        else{//別人的turn
-          switch(now_piece){//判斷會不會被別人吃掉
+        else if(!my_turn){//別人的turn
+          oppo_piece=oppo_board[i][j];
+          switch(oppo_piece){//判斷我會不會被別人吃掉
             case 1://pawn
-              if(this->player){//black
+              if(!who_am_I){//black
                 if(i < BOARD_H-1){
-                  if(j < BOARD_W-1 && (oppo_piece=oppo_board[i+1][j+1])){
-                    ans-=chess_value[now_piece]*weight[1];
+                  if(j < BOARD_W-1 && (now_piece=self_board[i+1][j+1])){
+                    ans-=chess_value[now_piece]*weight[2];
                     
                   }
-                  if(j > 0 && (oppo_piece=oppo_board[i+1][j-1])){
-                    ans-=chess_value[now_piece]*weight[1];
+                  if(j > 0 && (now_piece=self_board[i+1][j-1])){
+                    ans-=chess_value[now_piece]*weight[2];
                   }
                 }
               }
               else{//white
                 if(i > 0){
-                  if(j < BOARD_W-1 && (oppo_piece=oppo_board[i-1][j+1])){
-                    ans-=chess_value[now_piece]*weight[1];
+                  if(j < BOARD_W-1 && (now_piece=self_board[i-1][j+1])){
+                    ans-=chess_value[now_piece]*weight[2];
                   }
-                  if(j > 0 && (oppo_piece=oppo_board[i-1][j-1])){
-                    ans-=chess_value[now_piece]*weight[1];
+                  if(j > 0 && (now_piece=self_board[i-1][j-1])){
+                    ans-=chess_value[now_piece]*weight[2];
                   }
                 }
               }
@@ -202,11 +209,11 @@ int State::evaluate(bool my_turn){
                   int target[2]={move_table_rook_bishop[part][block][0]+i,move_table_rook_bishop[part][block][1]+j};
 
                   if(target[0] >= BOARD_W || target[0] < 0 || target[1] >= BOARD_H || target[1] < 0) break;//出界
-                  if(self_board[target[0]][target[1]]) break;//被友軍擋住
+                  if(oppo_board[target[0]][target[1]]) break;//被友軍擋住
 
-                  if(oppo_board[target[0]][target[1]]){//會被別人吃
-                    oppo_piece=oppo_board[target[0]][target[1]];
-                    ans-=chess_value[now_piece]*weight[1];
+                  if(self_board[target[0]][target[1]]){//我會被他吃
+                    now_piece=self_board[target[0]][target[1]];
+                    ans-=chess_value[now_piece]*weight[2];
                     break;
                   }
                 }
@@ -214,14 +221,16 @@ int State::evaluate(bool my_turn){
             break;
             case 3:
               for(int block=0;block<8;block++){
+                ans-=((abs(i-my_king_pos[0])+abs(j-my_king_pos[1]))*weight[3]);
+
                 int target[2]={move_table_knight[block][0]+i,move_table_knight[block][1]+j};
 
                 if(target[0] >= BOARD_W || target[0] < 0 || target[1] >= BOARD_H || target[1] < 0) continue;;//出界
-                if(self_board[target[0]][target[1]]) continue;;//被友軍擋住
+                if(oppo_board[target[0]][target[1]]) continue;;//被友軍擋住
 
-                if(oppo_board[target[0]][target[1]]){//會被別人吃
-                  oppo_piece=oppo_board[target[0]][target[1]];
-                  ans-=chess_value[now_piece]*weight[1];
+                if(self_board[target[0]][target[1]]){//我會被他吃
+                  now_piece=self_board[target[0]][target[1]];
+                  ans-=chess_value[now_piece]*weight[2];
                 }
               }
               break;
@@ -230,26 +239,21 @@ int State::evaluate(bool my_turn){
                 int target[2]={move_table_king[block][0]+i,move_table_king[block][1]+j};
 
                 if(target[0] >= BOARD_W || target[0] < 0 || target[1] >= BOARD_H || target[1] < 0) continue;;//出界
-                if(self_board[target[0]][target[1]]) continue;;//被友軍擋住
+                if(oppo_board[target[0]][target[1]]) continue;;//被友軍擋住
 
-                if(oppo_board[target[0]][target[1]]){//可以吃別人
-                  oppo_piece=oppo_board[target[0]][target[1]];
-                  ans-=chess_value[now_piece]*weight[1];
+                if(self_board[target[0]][target[1]]){//我會被牠吃
+                  now_piece=self_board[target[0]][target[1]];
+                  ans-=chess_value[now_piece]*weight[2];
                 }
               }
               break;
           }
-        }
-      }
-      else if(oppo_board[i][j]){//扣別人的
-        oppo_piece=oppo_board[i][j];
-        ans-=chess_value[oppo_piece]*weight[0];
-      }
+        }*/
     }
   }
-
+  cout<<ans<<"#######"<<"\n\n\n\n\n\n\n";
   return ans;
-  
+  //return 0;
 }
 
 
