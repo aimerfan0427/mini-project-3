@@ -39,35 +39,54 @@ static const int move_table_king[8][2] = {
 
 int State::evaluate(bool my_turn,int who_am_I){
   // [TODO] design your own evaluation function
-  int chess_value[7]={0, 2, 6, 7, 8, 20, 1000};
-  float weight[10]={15,8,6,2,15};
+  int chess_value[7]={0, 2, 6, 7, 8, 20, 100};
+  float weight[10]={15,8,8,2,15};
   int ans=0;
   int now_piece=0,oppo_piece=0;
-  int my_king_pos[2];
 
   auto self_board=this->board.board[who_am_I];//自己的板永遠是固定的
   auto oppo_board=this->board.board[1-who_am_I];
-  //cout<<who_am_I<<endl;
-
-  for(int i=0;i<BOARD_H;i++){
-    for(int j=0;j<BOARD_W;j++){
-      if(self_board[i][j] == 6){
-        my_king_pos[0]=i;
-        my_king_pos[1]=j;
-      }
-    }
-  }
-
+  
   for(int i=0;i<BOARD_H;i++){
     for(int j=0;j<BOARD_W;j++){
 
       if(self_board[i][j]){//加自己的
         now_piece=self_board[i][j];
         ans+=chess_value[now_piece]*weight[0];
+        
+
+        if(who_am_I){
+          if(i == 2 || i== 3){
+            ans+=5;
+          }
+          if(i ==4 || i == 5){
+            ans+=10;
+          }
+          if(now_piece == 1){
+            if(i>1){
+              ans+=chess_value[now_piece]*(i+3);
+            }
+          }
+        }
+        else{
+          if(i == 2 || i== 3){
+            ans+=5;
+          }
+          if(i == 0 || i == 1){
+            ans+=10;
+          }
+          if(now_piece == 1){
+            if(i>=0 && i<=3){
+              ans+=chess_value[now_piece]*(9-i);
+            }
+          }
+        }
+
       }
       else if(oppo_board[i][j]){//扣別人的
         oppo_piece=oppo_board[i][j];
         ans-=chess_value[oppo_piece]*weight[4];
+        
       }  
         
         /*if(my_turn){//我的turn
@@ -221,8 +240,7 @@ int State::evaluate(bool my_turn,int who_am_I){
             break;
             case 3:
               for(int block=0;block<8;block++){
-                ans-=((abs(i-my_king_pos[0])+abs(j-my_king_pos[1]))*weight[3]);
-
+                
                 int target[2]={move_table_knight[block][0]+i,move_table_knight[block][1]+j};
 
                 if(target[0] >= BOARD_W || target[0] < 0 || target[1] >= BOARD_H || target[1] < 0) continue;;//出界

@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "../state/state.hpp"
-#include "./ab.hpp"
+#include "./submission.hpp"
 
 using namespace std;
 
@@ -16,18 +16,8 @@ using namespace std;
  * @return Move 
  */
 
-Move ab::get_move(State *state, int depth){//在這裡call evaluate()
+Move submission::get_move(State *state, int depth){//在這裡call evaluate()
   
-  /*if(!state->legal_actions.size())
-    state->get_legal_actions();
-  
-
-  vector<Move> moves;
-  for(size_t i=0;i < (state->legal_actions.size());i++){
-    moves.push_back(state->legal_actions[i]);
-    state->next_states.push_back(state->next_state(state->legal_actions[i]));
-
-  }*/
   construct_tree(state,depth);
 
   const int who_am_I=state->player;//0:我是白,1:我是黑
@@ -46,22 +36,10 @@ Move ab::get_move(State *state, int depth){//在這裡call evaluate()
     }
   }
 
-  cout<<value<<"???????\n\n\n\n\n"<<endl;
-
-  /*for(size_t i=0;i < (state->legal_actions.size());i++){
-    if(state->next_states[i]->state_value == value){
-      cout<<state->next_states[i]->state_value<<"!!!!!!!!!\n\n\n\n\n"<<endl;
-      move=state->legal_actions[i];
-      break;
-    }
-    
-  }*/
-
-  
   return move;
 }
 
-int ab::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int beta){
+int submission::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int beta){
 
   int value=0;
   bool my_turn;
@@ -70,8 +48,7 @@ int ab::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int 
   if(depth == 0){
     return state->evaluate(my_turn,who_am_I);
   }
-  //if(state->game_state == WIN && my_turn) return 10000;
-
+ 
   if(my_turn){//should maximize the value
     int maximum=-100000000;
 
@@ -84,7 +61,6 @@ int ab::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int 
       }
     }
 
-    //state->state_value=maximum;
 
     return maximum;
   }
@@ -100,13 +76,11 @@ int ab::go_minimax(State *state,int depth,int player,int who_am_I,int alpha,int 
       }
     }
 
-    //state->state_value=minimum;
-
     return minimum;
   }
 }
 
-void ab::construct_tree(State *state,int depth){
+void submission::construct_tree(State *state,int depth){
 
   if(depth == 0) return;
 

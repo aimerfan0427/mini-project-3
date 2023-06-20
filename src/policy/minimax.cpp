@@ -32,7 +32,7 @@ Move minimax::get_move(State *state, int depth){//在這裡call evaluate()
 
   int value=-100000000;
   for(auto the_next_state:state->next_states){
-    the_next_state->state_value=go_minimax(state,depth,!state->player,who_am_I);
+    the_next_state->state_value=go_minimax(the_next_state,depth-1,!state->player,who_am_I);
     //value=max(value,the_next_state->state_value);
   }
   for(size_t i=0;i <state->next_states.size();i++){
@@ -62,7 +62,7 @@ int minimax::go_minimax(State *state,int depth,int player,int who_am_I){
   bool my_turn;
   my_turn=!(player ^ who_am_I);
 
-  if(depth ==0 || state->game_state == WIN || state->game_state == DRAW){
+  if(depth ==0){
     state->state_value=state->evaluate(my_turn,who_am_I);
     return state->state_value;
   }
@@ -88,7 +88,7 @@ int minimax::go_minimax(State *state,int depth,int player,int who_am_I){
 
 void minimax::construct_tree(State *state,int depth){//有錯
 
-  if(depth == 0 || state->game_state == WIN || state->game_state == DRAW) return ;
+  if(depth == 0) return ;
 
   State *next;
   state->get_legal_actions();
